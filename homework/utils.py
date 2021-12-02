@@ -10,6 +10,17 @@ RESCUE_TIMEOUT = 30
 TRACK_OFFSET = 15
 DATASET_PATH = 'drive_data'
 
+class Player:
+    def __init__(self, player, team=0):
+        self.player = player
+        self.team = team
+
+    @property
+    def config(self):
+        return pystk.PlayerConfig(controller=pystk.PlayerConfig.Controller.PLAYER_CONTROL, kart=self.player.kart, team=self.team)
+    
+    def __call__(self, image, player_info):
+        return self.player.act(image, player_info)
 
 class SuperTuxDataset(Dataset):
     def __init__(self, dataset_path=DATASET_PATH, transform=dense_transforms.ToTensor()):
@@ -103,13 +114,14 @@ class PyTux:
             fig, ax = plt.subplots(1, 1)
 
         for t in range(max_frames):
-
+            
             state.update()
             track.update()
 
             kart = state.players[0].kart
 
             if np.isclose(kart.overall_distance / track.length, 1.0, atol=2e-3):
+                
                 if verbose:
                     print("Finished at t=%d" % t)
                 break
@@ -127,7 +139,7 @@ class PyTux:
                 aim_point_image = planner(TF.to_tensor(image)[None]).squeeze(0).cpu().detach().numpy()
 
             current_vel = np.linalg.norm(kart.velocity)
-            action = controller(aim_point_image, current_vel)
+            action = controller(aim_point_image, current_vel, kart.location)
 
             if current_vel < 1.0 and t - last_rescue > RESCUE_TIMEOUT:
                 last_rescue = t

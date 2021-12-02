@@ -22,27 +22,9 @@ def to_numpy(location):
     """
     return np.float32([location[0], location[2]])
 
-def control(aim_point, current_vel):
-    """
-    Set the Action for the low-level controller
-    :param aim_point: Aim point, in screen coordinate frame [-1..1]
-    :param current_vel: Current velocity of the kart
-    :return: a pystk.Action (set acceleration, brake, steer, drift)
-    """
+def control_steer(aim_point, current_vel):
     action = pystk.Action()
-    state = pystk.WorldState()
-    kart = pystk.Kart
-
-    """
-    Your code here
-    Hint: Use action.acceleration (0..1) to change the velocity. Try targeting a target_velocity (e.g. 20).
-    Hint: Use action.brake to True/False to brake (optionally)
-    Hint: Use action.steer to turn the kart towards the aim_point, clip the steer angle to -1..1
-    Hint: You may want to use action.drift=True for wide turns (it will turn faster)
-    """
-
     target_vel = 22
-    action.nitro = True
 
     # Acceleration adjustments
     if current_vel < target_vel / 3:
@@ -69,39 +51,69 @@ def control(aim_point, current_vel):
         action.steer = angle
         action.drift = False
     
-    #print(kart.location)
+    return action
 
-    # pos_me = to_numpy(pystk.Kart.location)
+def control(aim_point, current_vel, location):
+    """
+    Set the Action for the low-level controller
+    :param aim_point: Aim point, in screen coordinate frame [-1..1]
+    :param current_vel: Current velocity of the kart
+    :return: a pystk.Action (set acceleration, brake, steer, drift)
+    """
+    action = pystk.Action()
+    state = pystk.WorldState()
 
-    # # Look for the closest pick up (bomb, gift, etc..).
-    # closest_item = to_numpy(state.items[0].location)
-    # closest_item_distance = np.inf
+    """
+    Your code here
+    Hint: Use action.acceleration (0..1) to change the velocity. Try targeting a target_velocity (e.g. 20).
+    Hint: Use action.brake to True/False to brake (optionally)
+    Hint: Use action.steer to turn the kart towards the aim_point, clip the steer angle to -1..1
+    Hint: You may want to use action.drift=True for wide turns (it will turn faster)
+    """
+
+    action.nitro = True
+    target_distance = 10
 
     state.update()
+    pos_me = to_numpy(location)
+
+    # Look for the closest pick up (bomb, gift, etc..).
+    closest_item = to_numpy(state.items[0].location)
+    closest_item_distance = np.inf
 
     for item in state.items:
-        print(item)
-
     # from https://github.com/philkr/pystk/blob/253ef48b4d68bd6cc7e9db6d4877a1f01a80bdcd/examples/hockey_gamestate.py#L10:
     
-    #     item_norm = np.linalg.norm(
-    #             get_vector_from_this_to_that(pos_me, to_numpy(item.location), normalize=False))
+        # current item to kart
+        item_norm = np.linalg.norm(
+                get_vector_from_this_to_that(pos_me, to_numpy(item.location), normalize=False))
 
-    #     if item_norm < closest_item_distance:
-    #         closest_item = to_numpy(item.location)
-    #         closest_item_distance = item_norm
-        
-    #     print(closest_item)
+        # updates closest item
+        if item_norm < closest_item_distance:
+            closest_item_location = to_numpy(item.location)
+            closest_item = item.type
+            closest_item_distance = item_norm
 
-    # Get some directional vectors.
-        # front_me = to_numpy(state.karts[0].front)
-        # ori_me = get_vector_from_this_to_that(pos_me, front_me)
-        # ori_to_ai = get_vector_from_this_to_that(pos_me, pos_ai)
-        # ori_to_item = get_vector_from_this_to_that(pos_me, closest_item)
-    
-    # if abs(1 - np.dot(ori_me, ori_to_item)) > 1e-4:
-    #     uis[0].current_action.steer = np.sign(np.cross(ori_to_item, ori_me))
-    # , state
+        #print(closest_item_location[0] - location[0])
+
+        # checks for closer items within a relevant range
+        if item_norm < target_distance and closest_item_location[0] - location[0] > 5:
+            # banana
+            if closest_item == 1:
+                # steers away from this item
+                if closest_item_location[1] - location[2] < 0.2 and closest_item_location[1] - location[2] > 0:
+                    action.steer = -0.5
+                if closest_item_location[1] - location[2] > -0.2 and closest_item_location[1] - location[2] < 0:
+                    action.steer = 0.5
+            # nitro small
+            elif closest_item == 3 or closest_item == 0:
+                # steers towards item
+                if closest_item_location[1] - location[2] < 0:
+                    action.steer = -0.5
+                elif closest_item_location[1] - location[2] > 0:
+                    action.steer = 0.5
+        else:
+            action = control_steer(aim_point, current_vel)
 
     return action
 
