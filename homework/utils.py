@@ -176,9 +176,8 @@ if __name__ == '__main__':
     from os import makedirs
 
 
-    def noisy_control(aim_pt, vel):
-        return control(aim_pt + np.random.randn(*aim_pt.shape) * aim_noise,
-                       vel + np.random.randn() * vel_noise)
+    def noisy_control(aim_pt, vel, location):
+        return control(aim_pt + np.random.randn(*aim_pt.shape) * aim_noise, vel + np.random.randn() * vel_noise, location)
 
 
     parser = ArgumentParser("Collects a dataset for the high-level planner")
@@ -213,8 +212,8 @@ if __name__ == '__main__':
             n += 1
 
 
-        while n < args.steps_per_track:
-            steps, how_far = pytux.rollout(track, noisy_control, planner=planner, max_frames=1000, verbose=args.verbose, data_callback=collect)
+        while n < args.steps_per_track: #track, noisy_control, planner=planner, max_frames=1000, verbose=args.verbose, data_callback=collect
+            steps, how_far = pytux.rollout(track, noisy_control, max_frames=1000, verbose=args.verbose, data_callback=collect)
             print(steps, how_far)
             # Add noise after the first round
             aim_noise, vel_noise = args.aim_noise, args.vel_noise
