@@ -24,7 +24,8 @@ def to_numpy(location):
 
 def control_steer(aim_point, current_vel):
     action = pystk.Action()
-    target_vel = 22
+    target_vel = 21.9579
+    action.drift = False
 
     # Acceleration adjustments
     if current_vel < target_vel / 3:
@@ -72,7 +73,7 @@ def control(aim_point, current_vel, location):
     """
 
     action.nitro = True
-    target_distance = 10
+    target_distance = 9.3
 
     state.update()
     pos_me = to_numpy(location)
@@ -101,17 +102,19 @@ def control(aim_point, current_vel, location):
             # banana
             if closest_item == 1:
                 # steers away from this item
-                if closest_item_location[1] - location[2] < 0.2 and closest_item_location[1] - location[2] > 0:
+                if closest_item_location[1] - location[2] >= 0:
                     action.steer = -0.5
-                if closest_item_location[1] - location[2] > -0.2 and closest_item_location[1] - location[2] < 0:
+                if closest_item_location[1] - location[2] < 0:
                     action.steer = 0.5
-            # nitro small
-            elif closest_item == 3 or closest_item == 0:
+            # nitro small or big
+            elif closest_item == 3 or closest_item == 2:
                 # steers towards item
                 if closest_item_location[1] - location[2] < 0:
                     action.steer = -0.5
                 elif closest_item_location[1] - location[2] > 0:
                     action.steer = 0.5
+                else:
+                    action.steer = 0
         else:
             action = control_steer(aim_point, current_vel)
 
