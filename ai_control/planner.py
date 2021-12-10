@@ -4,37 +4,37 @@ import torch
 import torch.nn.functional as F
 
 
-def spatial_argmax(logit):
-    """
-    Compute the soft-argmax of a heatmap
-    :param logit: A tensor of size BS x H x W
-    :return: A tensor of size BS x 2 the soft-argmax in normalized coordinates (-1 .. 1)
-    """
-    weights = F.softmax(logit.view(logit.size(0), -1), dim=-1).view_as(logit)
-    return torch.stack(((weights.sum(1) * torch.linspace(-1, 1, logit.size(2)).to(logit.device)[None]).sum(1),
-                        (weights.sum(2) * torch.linspace(-1, 1, logit.size(1)).to(logit.device)[None]).sum(1)), 1)
+# def spatial_argmax(logit):
+#     """
+#     Compute the soft-argmax of a heatmap
+#     :param logit: A tensor of size BS x H x W
+#     :return: A tensor of size BS x 2 the soft-argmax in normalized coordinates (-1 .. 1)
+#     """
+#     weights = F.softmax(logit.view(logit.size(0), -1), dim=-1).view_as(logit)
+#     return torch.stack(((weights.sum(1) * torch.linspace(-1, 1, logit.size(2)).to(logit.device)[None]).sum(1),
+#                         (weights.sum(2) * torch.linspace(-1, 1, logit.size(1)).to(logit.device)[None]).sum(1)), 1)
 
 
 class Planner(torch.nn.Module):
     def __init__(self):
 
-      super(Planner, self).__init__()
+        super(Planner, self).__init__()
 
-      # Using same architecture as "Playing Atari with Deep Reinforcement Learning" (https://arxiv.org/pdf/1312.5602.pdf)
-      # 128 x 96 -> size of input
-      # Referencing https://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-in-pytorch/ for syntax
+        # Using same architecture as "Playing Atari with Deep Reinforcement Learning" (https://arxiv.org/pdf/1312.5602.pdf)
+        # 96 x 96 -> size of input
+        # Referencing https://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-in-pytorch/ for syntax
 
-      self.layer1 = torch.nn.Sequential(
-        torch.nn.Conv2d(3,16,8,4,2),
-        torch.nn.ReLU(),
-        torch.nn.MaxPool2d(2,2)) # 64 x 48
-      self.layer2 = torch.nn.Sequential(
-        torch.nn.Conv2d(16,32,4,2,2),
-        torch.nn.ReLU(),
-        torch.nn.MaxPool2d(2,2)) # 32 x 24
+        self.layer1 = torch.nn.Sequential(
+            torch.nn.Conv2d(3,16,8,4,2),
+            torch.nn.ReLU(),
+            torch.nn.MaxPool2d(2,2)) # 48 x 48
+        self.layer2 = torch.nn.Sequential(
+            torch.nn.Conv2d(16,32,4,2,2),
+            torch.nn.ReLU(),
+            torch.nn.MaxPool2d(2,2)) # 24 x 24
         
-      self.fc = torch.nn.Linear(32 * 24 * 32, 1)
-
+        self.drop_out = torch.nn.Dropout()
+        self.fc = torch.nn.Linear(24 * 24 * 32, 1)
 
         # super().__init__()
 
@@ -55,21 +55,25 @@ class Planner(torch.nn.Module):
         """
         Your code here
         Predict the aim point in image coordinate, given the supertuxkart image
-        @img: (B,3,96,128)
+        @img: (B,3,96,96)
         return (B,2)
         """
-
+        print(img[0])
         x = self.layer1(img)
+        print(x.size(0), x.size(1))
         x = self.layer2(x)
-        x = x.reshape(x.size(0), -1) # 24576 x 1
+        print(x.size(0), x.size(1))
+        x.reshape(-1) # 1 x 18432
+        print(x.size(0), x.size(1))
         x = self.drop_out(x)
+        print(x.size(0), x.size(1))
         x = self.fc(x)
 
         # x = self._conv(img)
         
         #print(img.shape)
         #print(x.shape)
-        return spatial_argmax(x[:, 0])
+        return x
         # return self.classifier(x.mean(dim=[-2, -1]))
 
 

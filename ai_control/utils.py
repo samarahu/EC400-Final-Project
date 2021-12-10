@@ -51,7 +51,7 @@ def load_data(dataset_path=DATASET_PATH, transform=dense_transforms.ToTensor(), 
 class PyTux:
     _singleton = None
 
-    def __init__(self, screen_width=128, screen_height=96):
+    def __init__(self, screen_width=96, screen_height=96):
         assert PyTux._singleton is None, "Cannot create more than one pytux object"
         PyTux._singleton = self
         self.config = pystk.GraphicsConfig.hd()
