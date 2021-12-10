@@ -18,36 +18,38 @@ def spatial_argmax(logit):
 class Planner(torch.nn.Module):
     def __init__(self):
 
-      # super(Planner, self).__init__()
+      super(Planner, self).__init__()
 
       # Using same architecture as "Playing Atari with Deep Reinforcement Learning" (https://arxiv.org/pdf/1312.5602.pdf)
       # 128 x 96 -> size of input
       # Referencing https://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-in-pytorch/ for syntax
 
-      # self.layer1 = torch.nn.Sequential(
-      #   torch.nn.Conv2d(3,16,8,4,2),
-      #   torch.nn.ReLU(),
-      #   torch.nn.MaxPool2d(2,2)) # 64 x 48
-      # self.layer2 = torch.nn.Sequential(
-      #   torch.nn.Conv2d(16,32,4,2,2),
-      #   torch.nn.ReLU(),
-      #   torch.nn.MaxPool2d(2,2)) # 32 x 24
-      # self.fc = torch.nn.Linear(32 * 24 * 32, 1)
+      self.layer1 = torch.nn.Sequential(
+        torch.nn.Conv2d(3,16,8,4,2),
+        torch.nn.ReLU(),
+        torch.nn.MaxPool2d(2,2)) # 64 x 48
+      self.layer2 = torch.nn.Sequential(
+        torch.nn.Conv2d(16,32,4,2,2),
+        torch.nn.ReLU(),
+        torch.nn.MaxPool2d(2,2)) # 32 x 24
+        
+      self.fc = torch.nn.Linear(32 * 24 * 32, 1)
 
-        super().__init__()
 
-        layers = []
-        layers.append(torch.nn.Conv2d(3,16,8,4,2))
-        layers.append(torch.nn.ReLU())
-        layers.append(torch.nn.MaxPool2d(2,2))
+        # super().__init__()
 
-        layers.append(torch.nn.Conv2d(16,32,4,2,2))
-        layers.append(torch.nn.ReLU())
-        layers.append(torch.nn.MaxPool2d(2,2))
+        # layers = []
+        # layers.append(torch.nn.Conv2d(3,16,8,4,2))
+        # layers.append(torch.nn.ReLU())
+        # layers.append(torch.nn.MaxPool2d(2,2))
 
-        layers.append(torch.nn.Linear(32 * 24 * 32, 1))
+        # layers.append(torch.nn.Conv2d(16,32,4,2,2))
+        # layers.append(torch.nn.ReLU())
+        # layers.append(torch.nn.MaxPool2d(2,2))
 
-        self._conv = torch.nn.Sequential(*layers)
+        # layers.append(torch.nn.Linear(32 * 24 * 32, 1))
+
+        # self._conv = torch.nn.Sequential(*layers)
 
     def forward(self, img):
         """
@@ -57,13 +59,13 @@ class Planner(torch.nn.Module):
         return (B,2)
         """
 
-        # x = self.layer1(img)
-        # x = self.layer2(x)
-        # x = x.reshape(x.size(0), -1) # 24576 x 1
-        # x = self.drop_out(x)
-        # x = self.fc(x)
+        x = self.layer1(img)
+        x = self.layer2(x)
+        x = x.reshape(x.size(0), -1) # 24576 x 1
+        x = self.drop_out(x)
+        x = self.fc(x)
 
-        x = self._conv(img)
+        # x = self._conv(img)
         
         #print(img.shape)
         #print(x.shape)
