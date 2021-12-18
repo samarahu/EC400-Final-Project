@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "Used in report reference."
+authors:
+  - family-names: "Uriarte"
+    given-names: "Samarah"
+  - family-names: "Ganesh"
+    given-names: "Prithika"
+title: "EC400 Final Project"
+version: 2.0.4
+date-released: 2021-11-29
+url: "https://github.com/samarahu/EC400-Final-Project/"
